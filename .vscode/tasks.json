@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "run file",
+      "type": "shell",
+      "command": "wgo -file .go clear :: gofmt . | go vet .| go run ."
+    }
+  ]
+}
