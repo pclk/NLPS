@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pclk/NLPS/pkg/utils"
+	"github.com/pclk/NLPS/utils"
 )
 
 func TestGenerateRandomString(t *testing.T) {

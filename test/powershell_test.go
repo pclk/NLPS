@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pclk/NLPS/pkg/powershell"
+	"github.com/pclk/NLPS/internal/powershell"
 )
 
 func TestInitPowerShell(t *testing.T) {

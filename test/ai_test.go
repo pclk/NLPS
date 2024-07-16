@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/joho/godotenv"
-	"github.com/pclk/NLPS/pkg/ai"
+	"github.com/pclk/NLPS/internal/ai"
 	"github.com/sashabaranov/go-openai"
 )
 
