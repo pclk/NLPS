@@ -8,6 +8,8 @@ import (
 	"github.com/pclk/NLPS/internal/config"
 	"github.com/spf13/cobra"
 
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -28,16 +30,67 @@ var configCmd = &cobra.Command{
 }
 
 type model struct {
-	table     table.Model
-	textInput textinput.Model
-	configs   map[string]string
-	cursor    int
-	editing   bool
+	table         table.Model
+	textInput     textinput.Model
+	configs       map[string]string
+	cursor        int
+	editing       bool
+	help          help.Model
+	tableKeys     tableKeyMap
+	textInputKeys textInputKeyMap
 }
 
 var baseStyle = lipgloss.NewStyle().
 	BorderStyle(lipgloss.NormalBorder()).
-	BorderForeground(lipgloss.Color("240"))
+	BorderForeground(lipgloss.Color("24"))
+
+type tableKeyMap struct {
+	Up   key.Binding
+	Down key.Binding
+	Edit key.Binding
+	Quit key.Binding
+}
+
+type textInputKeyMap struct {
+	Save key.Binding
+	Quit key.Binding
+}
+
+func (tk tableKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{
+		tk.Up,
+		tk.Down,
+		tk.Edit,
+		tk.Quit,
+	}
+}
+
+func (tk tableKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{{}, {}}
+}
+
+func (tik textInputKeyMap) ShortHelp() []key.Binding {
+	return []key.Binding{
+		tik.Save,
+		tik.Quit,
+	}
+}
+
+func (tik textInputKeyMap) FullHelp() [][]key.Binding {
+	return [][]key.Binding{{}, {}}
+}
+
+var tableKeys = tableKeyMap{
+	Up:   key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑", "move up")),
+	Down: key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓", "down")),
+	Edit: key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter:", "edit text")),
+	Quit: key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q:", "quit program")),
+}
+
+var textInputKeys = textInputKeyMap{
+	Save: key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter:", "save text")),
+	Quit: key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc:", "quit textinput")),
+}
 
 func initialModel() model {
 	configs := config.GetAllConfig()
@@ -47,11 +100,14 @@ func initialModel() model {
 	ti.Focus()
 
 	return model{
-		table:     initialTable(configs),
-		textInput: ti,
-		configs:   configs,
-		cursor:    0,
-		editing:   false,
+		table:         initialTable(configs),
+		textInput:     ti,
+		configs:       configs,
+		cursor:        0,
+		editing:       false,
+		help:          help.New(),
+		tableKeys:     tableKeys,
+		textInputKeys: textInputKeys,
 	}
 }
 
@@ -81,13 +137,13 @@ func initialTable(configs map[string]string) table.Model {
 	s := table.DefaultStyles()
 	s.Header = s.Header.
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
+		BorderForeground(lipgloss.Color("24")).
 		BorderBottom(true).
 		Align(lipgloss.Center).
 		Bold(false)
 	s.Selected = s.Selected.
 		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57"))
+		Background(lipgloss.Color("24"))
 	s.Cell = s.Cell.
 		Align(lipgloss.Center).
 		Bold(false)
@@ -104,15 +160,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.help.Width, m.textInput.Width = msg.Width, msg.Width
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "q", "ctrl+c":
+		switch {
+		case key.Matches(msg, m.tableKeys.Quit):
 			return m, tea.Quit
-		case "up", "down":
+		case key.Matches(msg, m.tableKeys.Up, m.tableKeys.Down):
 			if !m.editing {
 				m.table, cmd = m.table.Update(msg)
 			}
-		case "enter":
+		case key.Matches(msg, m.tableKeys.Edit):
 			if !m.editing {
 				m.editing = true
 				m.textInput.SetValue(m.table.SelectedRow()[1])
@@ -126,7 +184,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.editing = false
 				m.textInput.Blur()
 			}
-		case "esc":
+		case key.Matches(msg, m.textInputKeys.Quit):
 			if m.editing {
 				m.editing = false
 				m.textInput.Blur()
@@ -150,8 +208,9 @@ func (m model) View() string {
 
 	if m.editing {
 		b.WriteString("Edit value: " + m.textInput.View() + "\n")
+		b.WriteString(m.help.View(m.textInputKeys))
 	} else {
-		b.WriteString("Press 'enter' to edit, 'q' to quit\n")
+		b.WriteString(m.help.View(m.tableKeys))
 	}
 
 	return b.String()
