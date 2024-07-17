@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/pclk/NLPS/internal/ui"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -33,7 +34,10 @@ func GeneratePowerShellCommand(client *openai.Client, userInput string) string {
 
 	resp, err := client.CreateChatCompletion(context.Background(), req)
 	if err != nil {
-		log.Printf("Error communicating with OpenAI's API: %v\n", err)
+		fmt.Printf(ui.Error("Error communicating with OpenAI's API: %v"), err)
+		fmt.Println("")
+		fmt.Printf(ui.Info("Configure your OpenAI API Key using %s"), ui.Command("nlps config"))
+		fmt.Println("")
 		return ""
 	}
 

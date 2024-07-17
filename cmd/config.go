@@ -52,8 +52,9 @@ type tableKeyMap struct {
 }
 
 type textInputKeyMap struct {
-	Save key.Binding
-	Quit key.Binding
+	Paste key.Binding
+	Save  key.Binding
+	Quit  key.Binding
 }
 
 func (tk tableKeyMap) ShortHelp() []key.Binding {
@@ -71,6 +72,7 @@ func (tk tableKeyMap) FullHelp() [][]key.Binding {
 
 func (tik textInputKeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{
+		tik.Paste,
 		tik.Save,
 		tik.Quit,
 	}
@@ -88,8 +90,9 @@ var tableKeys = tableKeyMap{
 }
 
 var textInputKeys = textInputKeyMap{
-	Save: key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter:", "save text")),
-	Quit: key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc:", "quit textinput")),
+	Paste: key.NewBinding(key.WithKeys("just for help"), key.WithHelp("right-click:", "paste from clipboard")),
+	Save:  key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter:", "save text")),
+	Quit:  key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc:", "quit textinput")),
 }
 
 func initialModel() model {
@@ -165,7 +168,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.tableKeys.Quit):
-			return m, tea.Quit
+			if !m.editing {
+				return m, tea.Quit
+			}
 		case key.Matches(msg, m.tableKeys.Up, m.tableKeys.Down):
 			if !m.editing {
 				m.table, cmd = m.table.Update(msg)

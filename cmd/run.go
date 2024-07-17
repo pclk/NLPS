@@ -5,6 +5,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/pclk/NLPS/internal/ai"
 	"github.com/pclk/NLPS/internal/history"
 	"github.com/pclk/NLPS/internal/powershell"
@@ -15,9 +16,8 @@ import (
 )
 
 var (
-	silent    bool
-	noOutput  bool
-	errorOnly bool
+	silent   bool
+	noOutput bool
 )
 
 var runCmd = &cobra.Command{
@@ -31,7 +31,6 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 	runCmd.Flags().BoolVarP(&silent, "silent", "s", false, "Run the command without asking for confirmation")
 	runCmd.Flags().BoolVarP(&noOutput, "no-output", "n", false, "Do not display the command output and errors")
-	runCmd.Flags().BoolVarP(&errorOnly, "error-only", "e", false, "Only display the command error")
 }
 
 func runCommand(cmd *cobra.Command, args []string) {
@@ -49,35 +48,34 @@ func runCommand(cmd *cobra.Command, args []string) {
 
 	userInput := strings.Join(args, " ")
 	aiGeneratedCommand := ai.GeneratePowerShellCommand(client, userInput)
-
 	if aiGeneratedCommand == "" {
-		fmt.Println(ui.Error("Failed to generate a command. Please try again."))
 		return
 	}
 
-	fmt.Printf(ui.Command("Generated command: %s\n"), aiGeneratedCommand)
+	fmt.Printf(ui.Info("\nGenerated command: %s"), ui.Command(aiGeneratedCommand))
+	fmt.Println("")
 
 	if !silent {
-		fmt.Print(ui.Info("Do you want to execute this command? (y/n): "))
+		fmt.Print(ui.Info("Do you want to execute this command? (Y/n): "))
 		var response string
 		fmt.Scanln(&response)
-		if strings.ToLower(response) != "y" && strings.ToLower(response) != "yes" {
+		if strings.ToLower(response) != "y" && strings.ToLower(response) != "yes" && response != "" {
 			fmt.Println(ui.Info("Command execution cancelled."))
 			return
 		}
 	}
 
-	output, errorOutput := ps.SendCommand(aiGeneratedCommand)
+	_, output := ps.SendCommand(aiGeneratedCommand)
 	history.AddToHistory(aiGeneratedCommand)
 
 	if !noOutput {
-		if !errorOnly {
-			fmt.Println(ui.Success("Command output:"))
-			fmt.Println(ui.Success(output))
-		}
-		if errorOutput != "" {
-			fmt.Println(ui.Error("Error output:"))
-			fmt.Println(ui.Error(errorOutput))
+		if output != "" {
+			outputStyled := lipgloss.NewStyle().
+				Border(lipgloss.NormalBorder()).
+				BorderForeground(lipgloss.Color("24")).
+				Padding(0, 1).
+				Render(output)
+			fmt.Printf(ui.Info("Command output: \n%s"), outputStyled)
 		}
 	}
 }
