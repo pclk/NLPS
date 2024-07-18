@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/pclk/NLPS/internal/ai"
+	"github.com/pclk/NLPS/internal/ui"
 	"github.com/pclk/NLPS/utils"
 	"github.com/sashabaranov/go-openai"
 )
@@ -63,7 +64,7 @@ func (ps *PowerShell) SendCommand(command string) (string, string) {
 
 	output := ps.ReadOutputUntilMarker(uniqueMarker)
 	if output == "" {
-		log.Printf("Warning: No output received for command: %s", command)
+		fmt.Println(ui.Success("Command executed."))
 	}
 	return command, output
 }

@@ -29,13 +29,6 @@ func GetConfig(key string) string {
 	return value
 }
 
-func SetConfig(key, value string) {
-	viper.Set(key, value)
-	if err := viper.WriteConfig(); err != nil {
-		return
-	}
-}
-
 func RemoveConfig() {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
@@ -49,32 +42,4 @@ func RemoveConfig() {
 		log.Fatalf(ui.Error("Error removing configuration file: %v"), err)
 	}
 	fmt.Println(ui.Success("Configuration file removed."))
-}
-
-func AddAlias(name, command string) error {
-	aliases := viper.GetStringMapString("aliases")
-	if aliases == nil {
-		aliases = make(map[string]string)
-	}
-	aliases[name] = command
-	viper.Set("aliases", aliases)
-	return viper.WriteConfig()
-}
-
-func RemoveAlias(name string) bool {
-	aliases := viper.GetStringMapString("aliases")
-	if aliases == nil {
-		return false
-	}
-	if _, exists := aliases[name]; exists {
-		delete(aliases, name)
-		viper.Set("aliases", aliases)
-		viper.WriteConfig()
-		return true
-	}
-	return false
-}
-
-func GetAliases() map[string]string {
-	return viper.GetStringMapString("aliases")
 }

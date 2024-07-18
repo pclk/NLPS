@@ -75,6 +75,13 @@ func runCommand(cmd *cobra.Command, args []string) {
 				BorderForeground(lipgloss.Color("24")).
 				Padding(0, 1).
 				Render(output)
+			if strings.HasPrefix(output, "Error: ") {
+				outputStyled = lipgloss.NewStyle().
+					Border(lipgloss.NormalBorder()).
+					BorderForeground(lipgloss.Color("1")).
+					Padding(0, 1).
+					Render(ui.Error(output))
+			}
 			fmt.Printf(ui.Info("Command output: \n%s"), outputStyled)
 		}
 	}

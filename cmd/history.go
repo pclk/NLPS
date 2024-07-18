@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/pclk/NLPS/internal/history"
 	"github.com/pclk/NLPS/internal/ui"
@@ -37,6 +38,6 @@ func runHistory(cmd *cobra.Command, args []string) {
 
 	fmt.Println(ui.Info("Command History:"))
 	for i, command := range commands {
-		fmt.Printf("%d. %s\n", i+1, ui.Command(command))
+		fmt.Printf("%d. %s at %s\n", i+1, ui.Command(command.Command), command.Time.Format(time.RFC3339))
 	}
 }

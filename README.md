@@ -63,7 +63,6 @@ NLPS/
 │ ├── chat.go
 │ ├── run.go
 │ ├── history.go
-│ ├── alias.go
 │ ├── config.go
 ├── internal/
 │ ├── ai/

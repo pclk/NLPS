@@ -7,6 +7,7 @@ import (
 
 	"github.com/pclk/NLPS/internal/config"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -128,6 +129,9 @@ func initialTable(configs map[string]string) table.Model {
 
 	rows := make([]table.Row, 0, len(configs))
 	for _, k := range keys {
+		if k == "history" || k == "alias" {
+			continue
+		}
 		rows = append(rows, table.Row{k, fmt.Sprintf("%v", configs[k])})
 	}
 
@@ -184,7 +188,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				key := m.table.SelectedRow()[0]
 				value := m.textInput.Value()
 				m.configs[key] = value
-				config.SetConfig(key, value)
+				viper.Set(key, value)
+				viper.WriteConfig()
 				m.table = initialTable(m.configs)
 				m.editing = false
 				m.textInput.Blur()
